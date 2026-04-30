@@ -1,22 +1,18 @@
 import { Router } from 'express';
-import { successResponse } from '../../utils/responseFactory';
 
 const router = Router();
 
 import authRouter from './auth.routes';
 
-const itemsRouter = Router();
-itemsRouter.get('/', (req, res) => { res.json(successResponse({ status: 'Items route hit' })); });
+import itemRouter from './item.routes';
 
-const movementsRouter = Router();
-movementsRouter.get('/', (req, res) => { res.json(successResponse({ status: 'Movements route hit' })); });
+import movementRouter from './movement.routes';
 
-const locationsRouter = Router();
-locationsRouter.get('/', (req, res) => { res.json(successResponse({ status: 'Locations route hit' })); });
+import locationRouter from './location.routes';
 
 router.use('/auth', authRouter);
-router.use('/items', itemsRouter);
-router.use('/movements', movementsRouter);
-router.use('/locations', locationsRouter);
+router.use('/items', itemRouter);
+router.use('/movements', movementRouter);
+router.use('/locations', locationRouter);
 
 export default router;
