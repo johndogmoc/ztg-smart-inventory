@@ -1,0 +1,83 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String          @id @default(uuid()) @db.Uuid
+  email           String          @unique
+  password_hash   String
+  first_name      String?
+  last_name       String?
+  role            String          // STOCKER, SUPERVISOR, MANAGER, ADMIN
+  created_at      DateTime        @default(now()) @db.Timestamptz()
+  updated_at      DateTime        @updatedAt @db.Timestamptz()
+  deleted_at      DateTime?       @db.Timestamptz()
+
+  stock_movements StockMovement[]
+
+  @@map("users")
+}
+
+model Location {
+  id              String          @id @default(uuid()) @db.Uuid
+  aisle           String
+  shelf           String
+  bin             String
+  created_at      DateTime        @default(now()) @db.Timestamptz()
+  updated_at      DateTime        @updatedAt @db.Timestamptz()
+  deleted_at      DateTime?       @db.Timestamptz()
+
+  stock_movements StockMovement[]
+
+  @@unique([aisle, shelf, bin])
+  @@map("locations")
+}
+
+model Item {
+  id                     String          @id @default(uuid()) @db.Uuid
+  sku                    String          @unique
+  name                   String
+  description            String?
+  reorder_threshold      Int             @default(0) // Safe integers for threshold
+  max_stock_level        Int?
+  created_at             DateTime        @default(now()) @db.Timestamptz()
+  updated_at             DateTime        @updatedAt @db.Timestamptz()
+  deleted_at             DateTime?       @db.Timestamptz()
+  
+  stock_movements        StockMovement[]
+
+  @@map("items")
+}
+
+model StockMovement {
+  id              String          @id @default(uuid()) @db.Uuid
+  item_id         String          @db.Uuid
+  user_id         String          @db.Uuid
+  location_id     String          @db.Uuid
+  quantity_change Int             // Positive for stock in, Negative for stock out
+  movement_type   String          // IN, OUT, ADJUSTMENT, TRANSFER
+  created_at      DateTime        @default(now()) @db.Timestamptz()
+  updated_at      DateTime        @updatedAt @db.Timestamptz()
+  deleted_at      DateTime?       @db.Timestamptz()
+
+  item            Item            @relation(fields: [item_id], references: [id])
+  user            User            @relation(fields: [user_id], references: [id])
+  location        Location        @relation(fields: [location_id], references: [id])
+
+  // Rule 09: Index every foreign key column
+  @@index([user_id])
+  @@index([location_id])
+  
+  // Rule 09: Composite index on (item_id, created_at) for movement queries
+  @@index([item_id, created_at])
+  
+  @@map("stock_movements")
+}
